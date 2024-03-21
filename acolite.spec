@@ -23,7 +23,7 @@ hiddenimports+=['pywt._extensions._cwt']
 hiddenimports+=['scipy.spatial.transform._rotation_groups', 'cmath']
 hiddenimports+=['pyhdf.six']
 
-a = Analysis(['launch_acolite.py'],
+a = Analysis(['acolite/launch_acolite.py'],
              binaries=[],
              datas=datas,
              hiddenimports=hiddenimports,
