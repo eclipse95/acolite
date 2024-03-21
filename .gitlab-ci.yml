@@ -5,6 +5,8 @@ build-package:
   image: ubuntu:latest
   stage: build
   script:
+    - sed -i -e "s/archive.ubuntu.com/ubuntu.univ-nantes.fr/g" /etc/apt/sources.list
+    - sed -i -e "s/security.ubuntu.com/ubuntu.univ-nantes.fr/g" /etc/apt/sources.list
     - apt-get update -q && apt-get install --no-install-recommends python3-pip curl unzip
     - |
       curl --location --header "PRIVATE-TOKEN: glpat-S-UGaQrqRvSGpJbzHQYw" "https://gitlab.univ-nantes.fr/api/v4/projects/23117/jobs/artifacts/ci/download?job=build-package" --output gdal.zip
