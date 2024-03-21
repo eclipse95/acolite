@@ -1,0 +1,12 @@
+stages:
+  - build
+
+build-package:
+  image: $CI_REGISTRY_IMAGE:latest
+  stage: build
+  script:
+    - pip3 install build
+    - python3 -m build
+  artifacts:
+    paths:
+      - dist/*.whl
