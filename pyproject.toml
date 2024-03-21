@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel>=0.31.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "acolite"
+description = "ACOLITE: generic atmospheric correction module"
+requires-python = ">=3.7"
+keywords = ["acolite", "atmospheric_correction", "satellite", "imagery"]
+license = {file = "LICENCE.txt"}
+readme = "README.md"
+authors = [{name = "ACOLITE"}]
+version = "20221114.0"
+
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11"
+]
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "gdal",
+    "pyproj",
+    "scikit-image",
+    "pyhdf",
+    "pyresample",
+    "netcdf4",
+    "h5py",
+    "requests",
+    "pygrib",
+    "cartopy"
+]
+
+[project.urls]
+homepage = "https://github.com/acolite/acolite"
+documentation = "https://github.com/acolite/acolite"
+repository = "https://github.com/acolite/acolite"
+
+[tool.setuptools.packages.find]
+exclude = ["config", "data"]
