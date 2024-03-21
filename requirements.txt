@@ -1,0 +1,13 @@
+numpy
+matplotlib
+scipy
+gdal
+pyproj
+scikit-image
+pyhdf
+pyresample
+netcdf4
+h5py
+requests
+pygrib
+cartopy

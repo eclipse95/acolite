@@ -53,3 +53,7 @@ __pycache__/
 # Specific to Mac
 
 .DS_Store
+
+# Wheel
+*.egg-info/
+dist/
