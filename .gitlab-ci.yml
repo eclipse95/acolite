@@ -5,7 +5,7 @@ build-package:
   image: $CI_REGISTRY_IMAGE:latest
   stage: build
   script:
-    - apt-get install python3-venv
+    - apt-get install python3-venv -yq
     - pip3 install build
     - python3 -m build
   artifacts:
