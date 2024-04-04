@@ -18,14 +18,21 @@ region_name=
 limit=None
 limit_buffer=None
 sub=None
+extend_region=False
+l1r_crop=False
+## polygon can be a file or WKT string
 polygon=None
 polygon_limit=True
 polylakes=False
 polylakes_database=worldlakes
+## station coordinates and box size
+station_lon=None
+station_lat=None
+station_box_size=None
+station_box_units=km
+## L1 tile merging
 merge_tiles=False
-merge_zones=True
-extend_region=False
-l1r_crop=False
+merge_full_tiles=False
 
 ## new output settings
 output=None
@@ -37,6 +44,7 @@ output_rhorc=False
 ## add band names to datasets
 ## not supported for all sensors
 add_band_name=False
+add_detector_name=False
 
 ## compute contrabands
 compute_contrabands=False
@@ -280,15 +288,22 @@ adjacency_correction_method=radcor
 radcor_initial_aot=1.0
 radcor_psf_radius=15
 radcor_psf_rescale=False
-radcor_psf_complete_method=neighborhood
+radcor_psf_complete_method=neighbourhood
 radcor_force_model=None
 radcor_force_aot=None
-radcor_select_aot=minimum
 radcor_edge_extend=False
 radcor_edge_extend_method=average
-radcor_bratio_option=percentile
-radcor_bratio_percentile=1
-radcor_aot_est=tsdsf
+radcor_aot_estimate=tsdsf
+radcor_aot_estimate_centre_extent=None
+radcor_aot_estimate_centre_mask=False
+radcor_aot_selection=minimum
+radcor_skip_pan=False
+
+## radcor optimisation options
+radcor_optimise_target_lon=None
+radcor_optimise_target_lat=None
+radcor_optimise_target_rhos=None
+radcor_optimise_tolerance=0.001
 
 ## radcor output options
 radcor_write_rhot=True
@@ -299,8 +314,11 @@ radcor_diagnostic_plots=False
 
 ## ts-dsf options
 tsdsf_psf_radius=None
-tsdsf_psf_rescale=True
-tsdsf_psf_complete_method=neighborhood
+tsdsf_psf_rescale=False
+tsdsf_psf_complete_method=neighbourhood
+tsdsf_psf_centre_zero=False
+tsdsf_bratio_option=percentile
+tsdsf_bratio_percentile=1
 
 ## dark spectrum fitting options
 dsf_aot_estimate=tiled
@@ -431,7 +449,8 @@ pans_bgr=480,560,655
 pans_rgb_rhot=True
 pans_rgb_rhos=True
 pans_export_geotiff_rgb=False
-pans_sensors=L7_ETM,L8_OLI,L9_OLI
+pans_sensors=L7_ETM,L8_OLI,L9_OLI,PRISMA
+pans_scale_factor=None
 
 # more mapping options - under development
 map_projected=False

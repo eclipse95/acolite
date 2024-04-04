@@ -8,6 +8,7 @@
 ##                2021-12-31 (QV) new handling of settings
 ##                2022-11-16 (QV) added dfoo outputs
 ##                2023-07-12 (QV) removed netcdf_compression settings from nc_write call
+##                2024-03-27 (QV) added multiple full tile merging
 
 def l1_convert(inputfile, output = None, settings = {},
                 percentiles_compute = True,
@@ -132,13 +133,18 @@ def l1_convert(inputfile, output = None, settings = {},
 
             ## check if merging settings make sense
             merge_tiles = setu['merge_tiles']
-            merge_zones = setu['merge_zones']
             extend_region = setu['extend_region']
             if merge_tiles:
                 if (limit is None):
-                    if verbosity > 0: print("Merging tiles without ROI limit, merging to first tile extent")
-                merge_zones = True
-                extend_region = True
+                    if not setu['merge_full_tiles']:
+                        if verbosity > 0: print("Merging tiles without ROI limit, merging to first tile extent")
+                    else:
+                        if verbosity > 0: print("Merging tiles without ROI limit, merging to all tiles extent")
+                        dct_tiles = ac.sentinel2.multi_tile_extent(inputfile, dct = None)
+                else:
+                    extend_region = True
+
+        ## sub is set to None
         sub = None
 
         dtime = dateutil.parser.parse(grmeta['SENSING_TIME'])
@@ -254,27 +260,15 @@ def l1_convert(inputfile, output = None, settings = {},
                 print("Can't extend region if no ROI limits given")
                 extend_region = False
 
-        ##
-        if ((merge_tiles is False) & (merge_zones is False)): warp_to = None
-        if sub is None:
-            sub_pan = None
-            if ((merge_zones) & (warp_to is not None)):
-                if dct_prj != dct: ## target projection differs from this tile, need to set bounds
-                    if dct['proj4_string'] != dct_prj['proj4_string']:
-                        ## if the prj does not match, project current scene bounds to lat/lon
-                        lonr, latr = dct['p'](dct['xrange'], dct['yrange'], inverse=True)
-                        ## then to target projection
-                        xrange_raw, yrange_raw = dct_prj['p'](lonr, (latr[1], latr[0]))
-                        ## fix to nearest full pixel
-                        pixel_size = dct_prj['pixel_size']
-                        dct_prj['xrange'] = [xrange_raw[0] - (xrange_raw[0] % pixel_size[0]), xrange_raw[1]+pixel_size[0]-(xrange_raw[1] % pixel_size[0])]
-                        dct_prj['yrange'] = [yrange_raw[1]+pixel_size[1]-(yrange_raw[1] % pixel_size[1]), yrange_raw[0] - (yrange_raw[0] % pixel_size[1])]
-                        ## need to add new dimensions
-                        dct_prj['xdim'] = int((dct_prj['xrange'][1]-dct_prj['xrange'][0])/pixel_size[0])+1
-                        dct_prj['ydim'] = int((dct_prj['yrange'][1]-dct_prj['yrange'][0])/pixel_size[1])+1
-                        dct_prj['dimensions'] = [dct_prj['xdim'], dct_prj['ydim']]
-            elif (warp_to is None):
-                dct_prj = {k:dct[k] for k in dct}
+        ## remove warp_to from previous run if merge_tiles is not set
+        if (merge_tiles is False): warp_to = None
+        if sub is None: ## full tile processing
+            ## determine warping target
+            if (warp_to is None):
+                if (setu['merge_tiles'] & setu['merge_full_tiles']): ## warp to all tile extent
+                    dct_prj = {k:dct_tiles[k] for k in dct_tiles}
+                else: ## warp to current/first tile
+                    dct_prj = {k:dct[k] for k in dct}
         else:
             gatts['sub'] = sub
             gatts['limit'] = limit

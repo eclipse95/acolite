@@ -9,6 +9,7 @@
 ##                2022-09-19 (QV) printout platform info
 ##                2023-02-06 (QV) added WKT polygon output
 ##                2024-03-14 (QV) update settings handling
+##                2024-03-28 (QV) added station limit creation
 
 def acolite_run(settings, inputfile=None, output=None):
     import glob, datetime, os, shutil, copy
@@ -51,7 +52,7 @@ def acolite_run(settings, inputfile=None, output=None):
                     ac.settings['user']['polygon_old'] = '{}'.format(ac.settings['user']['polygon'])
                     ac.settings['user']['polygon'] = '{}'.format(polygon_new)
                 except:
-                    print('Provided is not a valid WKT polygon')
+                    print('Provided polygon is not a valid WKT polygon')
                     print(ac.settings['user']['polygon'])
                     ac.settings['user']['polygon'] = None
                     pass
@@ -59,6 +60,36 @@ def acolite_run(settings, inputfile=None, output=None):
     ## update run settings
     for k in ac.settings['user']: ac.settings['run'][k] = ac.settings['user'][k]
     if 'verbosity' in ac.settings['run']: ac.config['verbosity'] = int(ac.settings['run']['verbosity'])
+
+    ## create limit based on station_lon, station_lat, station_box
+    if (ac.settings['run']['station_lon'] is not None) &\
+       (ac.settings['run']['station_lat'] is not None) &\
+       (ac.settings['run']['station_box_size'] is not None) &\
+       (ac.settings['run']['limit'] is None) & (ac.settings['run']['polygon'] is None):
+       site_lat = ac.settings['run']['station_lat']
+       site_lon = ac.settings['run']['station_lon']
+       box_size = ac.settings['run']['station_box_size']
+       print('Creating new limit for position {}N, {}E, box size {} {}'.format(site_lat, site_lon, box_size, ac.settings['run']['station_box_units']))
+       if ac.settings['run']['station_box_units'][0] in ['k', 'm']:
+           if ac.settings['run']['station_box_units'][0] == 'm': box_size /= 1000.
+           ## get approximate distance per degree lon/lat
+           dlon, dlat = ac.shared.distance_in_ll(site_lat)
+           if type(box_size) is list:
+               lat_off, lon_off = (box_size[0]/dlat)/2, (box_size[1]/dlon)/2
+           else:
+               lat_off, lon_off = (box_size/dlat)/2, (box_size/dlon)/2
+       elif ac.settings['run']['station_box_units'][0] in ['d']:
+            if type(box_size) is list:
+                lat_off, lon_off = box_size[0]/2, box_size[1]/2
+            else:
+                lat_off, lon_off = box_size/2, box_size/2
+       else:
+            print('station_box_units={} not configured'.format(ac.settings['run']['station_box_units']))
+            return
+       ## set new limit
+       ac.settings['run']['limit'] = [site_lat-lat_off, site_lon-lon_off, site_lat+lat_off, site_lon+lon_off]
+       print('New limit: {}'.format(ac.settings['run']['limit']))
+    ## end create limit based on station information
 
     ## new path is only set if ACOLITE needs to make new directories
     ## and is only used if ACOLITE is asked to delete the output directory (don't use this feature!)
@@ -172,7 +203,8 @@ def acolite_run(settings, inputfile=None, output=None):
             if ac.settings['run']['atmospheric_correction']:
                 if gatts['acolite_file_type'] == 'L1R':
                     if (ac.settings['run']['adjacency_correction']) & (ac.settings['run']['adjacency_correction_method'] == 'radcor'):
-                        l2r = ac.adjacency.radcor.radcor(l1r, settings=ac.settings['run']) ## pass ac.settings['run'] at the moment
+                        l2r = ac.adjacency.radcor.radcor(l1r)
+                        if l2r is None: l2r = []
                     else:
                         ret = ac.acolite.acolite_l2r(l1r)
                         if len(ret) != 2:
@@ -182,12 +214,10 @@ def acolite_run(settings, inputfile=None, output=None):
                 else:
                     l2r = '{}'.format(l1r)
 
-                if (ac.settings['run']['adjacency_correction']) & (len(l2r) > 0):
-                    ret = None
-                    ## GLAD
-                    if (ac.settings['run']['adjacency_correction_method']=='glad'):
+                if (ac.settings['run']['adjacency_correction']) & (ac.settings['run']['adjacency_correction_method'] == 'glad'):
+                    if len(l2r) > 0:
                         ret = ac.adjacency.glad.glad_l2r(l2r, settings = ac.settings['run'], verbosity = ac.config['verbosity'])
-                    l2r = [] if ret is None else ret
+                        l2r = [] if ret is None else ret
 
                 ## if we have multiple l2r files
                 if (len(l2r) > 0):
