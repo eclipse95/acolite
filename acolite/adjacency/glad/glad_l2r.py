@@ -6,6 +6,7 @@
 ## modifications: 2021-10-11 (QV) added output option
 ##                2021-10-12 (QV) added alternative interface reflectance method
 ##                2021-11-09 (QV) added output of glad_x/glad_y
+##                2023-12-05 (QV) update of ofile naming
 
 
 def glad_l2r(ncf, output = None, ofile = None,
@@ -118,6 +119,8 @@ def glad_l2r(ncf, output = None, ofile = None,
     gatts_out['glad_tau_step'] = glad_tau_step
     gatts_out['glad_neg_pixel_diff'] = glad_neg_pixel_diff
 
+    gatts_out['acolite_file_type'] = 'L2R'
+
     if 'rhog' not in gatts_out['auto_grouping']:
         gatts_out['auto_grouping'] += ':rhog'
     if 'rhoe' not in gatts_out['auto_grouping']:
@@ -127,7 +130,10 @@ def glad_l2r(ncf, output = None, ofile = None,
 
     ## outputfile
     if ofile is None:
-        ofile = ncf.replace('_L2R.nc', '_L2R_GLAD.nc')
+        #ofile = ncf.replace('_L2R.nc', '_L2R_GLAD.nc')
+        dn = os.path.dirname(ncf)
+        bn = os.path.basename(ncf)
+        ofile = '{}/{}.nc'.format(dn, bn[0:bn.find('L2R')]+bn[bn.find('L2R'):bn.find('.nc')].replace('L2R', 'L2R_GLAD'))
     if output is not None:
         ofile = '{}/{}'.format(output, os.path.basename(ofile))
 
@@ -450,10 +456,10 @@ def glad_l2r(ncf, output = None, ofile = None,
             if verbosity > 2: print('Recomputing orange band')
             ## load orange band configuration
             if sensor == 'L8_OLI':
-                ob_cfg = ac.shared.import_config(ac.config['data_dir']+'/L8/oli_orange.cfg')
+                ob_cfg = ac.shared.import_config(ac.config['data_dir']+'/Landsat/L8_OLI_orange.cfg')
                 sensor_o = 'L8_OLI_ORANGE'
             if sensor == 'L9_OLI':
-                ob_cfg = ac.shared.import_config(ac.config['data_dir']+'/L9/oli_orange.cfg')
+                ob_cfg = ac.shared.import_config(ac.config['data_dir']+'/Landsat/L9_OLI_orange.cfg')
                 sensor_o = 'L9_OLI_ORANGE'
 
         ## load orange band data

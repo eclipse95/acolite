@@ -87,6 +87,7 @@ def download(urls, scenes = [], output = None, auth = None, auth_url = None, net
 
             ## try url
             print('Downloading {}'.format(scene))
+            print('Download URL: {}'.format(url))
             response = session.get(url, allow_redirects=False)
             ## follow redirects
             while response.status_code in (301, 302, 303, 307):

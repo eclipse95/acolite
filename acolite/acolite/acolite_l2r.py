@@ -37,7 +37,6 @@ def acolite_l2r(gem,
     ## read gem file if NetCDF
     if type(gem) is str:
         gem = ac.gem.gem(gem)
-        nc_projection = gem.nc_projection
     gemf = gem.file
 
     ## combine default and user defined settings
@@ -265,6 +264,10 @@ def acolite_l2r(gem,
             if setu['add_band_name']:
                 gem.bands[b]['rhot_ds'] = 'rhot_{}_{}'.format(b, gem.bands[b]['wave_name'])
                 gem.bands[b]['rhos_ds'] = 'rhos_{}_{}'.format(b, gem.bands[b]['wave_name'])
+            if setu['add_detector_name']:
+                dsname = rhot_ds[bi][5:]
+                gem.bands[b]['rhot_ds'] = 'rhot_{}'.format(dsname)
+                gem.bands[b]['rhos_ds'] = 'rhos_{}'.format(dsname)
             for k in tg_dict:
                 if k not in ['wave']:
                     gem.bands[b][k] = tg_dict[k][b]
@@ -413,7 +416,6 @@ def acolite_l2r(gem,
     ## setup output file
     ofile = None
     if output_file:
-        new_nc = True
         if target_file is None:
             ofile = gemf.replace('_L1R', '_L2R')
             #if ('output' in setu) & (output is None): output = setu['output']
@@ -423,11 +425,13 @@ def acolite_l2r(gem,
             ofile = '{}'.format(target_file)
 
         gemo = ac.gem.gem(ofile, new=True)
+        gemo.gatts = {k: gem.gatts[k] for k in gem.gatts}
+        gemo.nc_projection = gem.nc_projection
+        gemo.gatts['acolite_file_type'] = 'L2R'
+        gemo.gatts['ofile'] = ofile
 
-        gemo.nc_projection = nc_projection
         gemo.bands = gem.bands
         gemo.verbosity = setu['verbosity']
-        gemo.gatts = {k: gem.gatts[k] for k in gem.gatts}
         gemo.gatts['acolite_version'] = ac.version
 
         ## add settings to gatts
@@ -437,10 +441,6 @@ def acolite_l2r(gem,
                 gemo.gatts[k] = str(setu[k])
             else:
                 gemo.gatts[k] = setu[k]
-
-        ## output is L2R
-        gemo.gatts['acolite_file_type'] = 'L2R'
-        gemo.gatts['ofile'] = ofile
 
         ## copy datasets from inputfile
         copy_rhot = False
@@ -1215,6 +1215,11 @@ def acolite_l2r(gem,
             if verbosity > 2: print('Band {} at {} nm not in available rhot datasets'.format(b, gem.bands[b]['wave_name']))
             continue ## skip if we don't have rhot for a band that is in the RSR file
 
+        ## temporary fix
+        if gem.bands[b]['wave_mu'] < 0.345:
+            if verbosity > 2: print('Band {} at {} nm wavelength < 345 nm'.format(b, gem.bands[b]['wave_name']))
+            continue ## skip if below LUT range
+
         dsi = gem.bands[b]['rhot_ds']
         dso = gem.bands[b]['rhos_ds']
         cur_data, cur_att = gem.data(dsi, attributes=True)
@@ -1846,12 +1851,19 @@ def acolite_l2r(gem,
     ## clear aot results
     aot_lut, aot_sel = None, None
 
+    ## close inputfile
+    gem.close()
+    gem = None
+
     ## update attributes with latest version
-    if output_file: gemo.update_attributes()
+    if output_file:
+        gemo.gatts_update()
+        gemo.close()
 
     if verbosity>0: print('Wrote {}'.format(ofile))
 
     if return_gem:
-        return(gem, setu)
+        return(gemo, setu)
     else:
+
         return(ofile, setu)
