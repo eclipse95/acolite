@@ -18,6 +18,7 @@ from acolite import emit
 from acolite import hypso
 from acolite import pace
 
+from acolite import seviri
 
 from acolite import gf
 from acolite import amazonia
@@ -39,12 +40,12 @@ from acolite import masking
 from acolite import tact
 from acolite import acolite
 from acolite import adjacency
+from acolite import glint
 
 from acolite import gem
 from acolite import parameters
 
-from acolite import cdse
-from acolite import earthexplorer
+from acolite import api
 
 ## ignore numpy errors
 import numpy as np
